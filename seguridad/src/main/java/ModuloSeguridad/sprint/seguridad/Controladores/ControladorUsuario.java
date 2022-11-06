@@ -8,6 +8,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import javax.servlet.http.HttpServletResponse;
+import java.io.IOException;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.List;
@@ -58,21 +60,20 @@ public class ControladorUsuario {
     public Usuario asignarRolAUsuario(@PathVariable String id, @PathVariable
     String id_rol) {
         Usuario usuarioActual = this.miRepositorioUsuario.findById(id).orElseThrow(RuntimeException::new);
-
-          Rol rolActual = this.miRepositorioRol.findById(id_rol).orElseThrow(RuntimeException::new);
+        Rol rolActual = this.miRepositorioRol.findById(id_rol).orElseThrow(RuntimeException::new);
         usuarioActual.setRol(rolActual);
         return this.miRepositorioUsuario.save(usuarioActual);
     }
+
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("{id}")
     public void delete(@PathVariable String id){
-        Usuario usuarioActual=this.miRepositorioUsuario
-                .findById(id)
-                .orElse(null);
+        Usuario usuarioActual=this.miRepositorioUsuario.findById(id).orElse(null);
         if (usuarioActual!=null){
             this.miRepositorioUsuario.delete(usuarioActual);
         }
     }
+
     public String convertirSHA256(String password) {
         MessageDigest md = null;
         try {
@@ -88,5 +89,19 @@ public class ControladorUsuario {
             sb.append(String.format("%02x", b));
         }
         return sb.toString();
+    }
+
+    @PostMapping("/validate") //Validación de usuario (email, contraseña ) en DB
+    public Usuario validate(@RequestBody Usuario infoUsuario, final HttpServletResponse response) throws IOException {
+        Usuario usuario = miRepositorioUsuario.getUserByEmail(infoUsuario.getCorreo());
+        String clave_ingresada = convertirSHA256(infoUsuario.getContrasena());//captura cadena con variable
+        if( usuario != null){
+            if(usuario.getContrasena().equals(clave_ingresada)){
+                usuario.setContrasena("");
+                return usuario;
+            }
+        }
+        response.sendError(HttpServletResponse.SC_UNAUTHORIZED);
+        return null;
     }
 }

@@ -6,7 +6,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 // Imports project Models and Repositories
 import ModuloSeguridad.sprint.seguridad.Modelos.Permiso;
-import ModuloSeguridad.sprint.seguridad.Modelos.PermisosRol;
+import ModuloSeguridad.sprint.seguridad.Modelos.PermisosRoles;
 import ModuloSeguridad.sprint.seguridad.Modelos.Rol;
 import ModuloSeguridad.sprint.seguridad.Repositorios.RepositorioPermiso;
 import ModuloSeguridad.sprint.seguridad.Repositorios.RepostorioPermisoRol;
@@ -16,7 +16,7 @@ import java.util.List;
 
 @CrossOrigin
 @RestController
-@RequestMapping("/permisosRol")
+@RequestMapping("/permisos-roles")
 public class ControladorPermisoRol {
 
     @Autowired
@@ -29,7 +29,7 @@ public class ControladorPermisoRol {
     private RepositorioRol miRepositorioRol;
 
     @GetMapping("")
-    public List<PermisosRol> index(){
+    public List<PermisosRoles> index(){
         return this.miRepositorioPermisoRol.findAll();
     }
 
@@ -42,9 +42,9 @@ public class ControladorPermisoRol {
 
     @ResponseStatus(HttpStatus.CREATED)
     @PostMapping("rol/{id_rol}/permiso/{id_permiso}")
-    public PermisosRol create(@PathVariable String id_rol,@PathVariable String id_permiso){
+    public PermisosRoles create(@PathVariable String id_rol, @PathVariable String id_permiso){
 
-        PermisosRol nuevo=new PermisosRol();
+        PermisosRoles nuevo=new PermisosRoles();
         Rol elRol=this.miRepositorioRol.findById(id_rol).get();
         Permiso elPermiso=this.miRepositorioPermiso.findById(id_permiso).get();
 
@@ -57,8 +57,8 @@ public class ControladorPermisoRol {
         }
     }
     @GetMapping("{id}")
-    public PermisosRol show(@PathVariable String id){
-        PermisosRol permisosRolesActual=this.miRepositorioPermisoRol
+    public PermisosRoles show(@PathVariable String id){
+        PermisosRoles permisosRolesActual=this.miRepositorioPermisoRol
                 .findById(id)
                 .orElse(null);
         return permisosRolesActual;
@@ -72,8 +72,8 @@ public class ControladorPermisoRol {
      * @return
      */
     @PutMapping("{id}/rol/{id_rol}/permiso/{id_permiso}")
-    public PermisosRol update(@PathVariable String id,@PathVariable String id_rol,@PathVariable String id_permiso){
-        PermisosRol permisosRolesActual=this.miRepositorioPermisoRol
+    public PermisosRoles update(@PathVariable String id, @PathVariable String id_rol, @PathVariable String id_permiso){
+        PermisosRoles permisosRolesActual=this.miRepositorioPermisoRol
                 .findById(id)
                 .orElse(null);
         Rol elRol=this.miRepositorioRol.findById(id_rol).get();
@@ -90,11 +90,22 @@ public class ControladorPermisoRol {
     @ResponseStatus(HttpStatus.NO_CONTENT)
     @DeleteMapping("{id}")
     public  void delete(@PathVariable String id){
-        PermisosRol permisosRolesActual=this.miRepositorioPermisoRol
+        PermisosRoles permisosRolesActual=this.miRepositorioPermisoRol
                 .findById(id)
                 .orElse(null);
         if (permisosRolesActual!=null){
             this.miRepositorioPermisoRol.delete(permisosRolesActual);
+        }
+    }
+
+    @GetMapping("validar-permiso/rol/{id_rol}") //implementación método validación de permisos
+    public PermisosRoles getPermiso(@PathVariable String id_rol, @RequestBody Permiso infoPermiso){
+        Permiso permiso = miRepositorioPermiso.getPermiso(infoPermiso.getUrl(), infoPermiso.getMetodo());//obtener permiso
+        Rol rol = miRepositorioRol.findById(id_rol).get();//obtener rol
+        if(permiso !=null && rol !=null){
+            return miRepositorioPermisoRol.getPermisosRoles(rol.get_id(), permiso.get_id());//devuelva lo del método
+        }else{
+            return null;
         }
     }
 }
